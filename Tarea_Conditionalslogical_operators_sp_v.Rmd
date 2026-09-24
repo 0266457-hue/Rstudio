@@ -6,7 +6,7 @@ Name: "Carlos Roman Ulloa"
 1. Import the df2 file found on the platform.
 R syntax: container<-read.csv("path/df2.csv") y guardalo como df2
 ```{r}
-df2<-read.csv("C:/Users/pablo/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/df2.csv",header=TRUE)
+df2<-read.csv("C:/Users/carlos/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/df2.csv",header=TRUE)
 ```
 Exercises
 a. Ingresos (annual_inc) mayores a 50,000 con un loan_status de: "Current".
