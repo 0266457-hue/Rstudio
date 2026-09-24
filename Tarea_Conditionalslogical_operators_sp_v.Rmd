@@ -1,0 +1,101 @@
+---
+title: "HW 1.1: Credit Analysis"
+output: html_document
+Name: "Pablo de Anda Michel"
+---
+1. Import the df2 file found on the platform.
+R syntax: container<-read.csv("path/df2.csv") y guardalo como df2
+```{r}
+df2<-read.csv("C:/Users/pablo/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/df2.csv",header=TRUE)
+```
+Exercises
+a. Ingresos (annual_inc) mayores a 50,000 con un loan_status de: "Current".
+
+Con las siguientes columnas: annual_inc, int_rate, purpose, term y loan_status.
+
+GUARDAR EN EL CONTENEDOR: A1
+
+b. Ingresos (annual_inc) mayores a 50,000 y con el plazo de deuda (term) igual a 36 meses ("36 months"), con todas las columnas.
+
+GUARDAR EN EL CONTENEDOR: B1
+
+c. Con la categoría de loan_status de "Charged Off" y la variable grade en la categoría de "A".
+
+Con las siguientes columnas: annual_inc, int_rate, purpose, term, grade y loan_status.
+
+GUARDAR EN EL CONTENEDOR: C1
+
+d. Con la categoría de loan_status de "Charged Off" y la variable purpose en la categoría de "house", con todas las columnas.
+
+GUARDAR EN EL CONTENEDOR: D1
+
+e. Que contenga las categorías de la columna loan_status: a) "Fully Paid" y b) "Charged Off", con ingresos (annual_inc) menores a c) 50,000.
+
+Con las siguientes columnas: annual_inc, int_rate, purpose, term, grade y loan_status.
+
+GUARDAR EN EL CONTENEDOR: E1
+
+f. Obtén perfiles con una tasa de interés (int_rate) mayor al 15% y una calificación (grade) de "E", "F" o "G".
+
+Con las siguientes columnas: annual_inc, int_rate, grade, sub_grade y loan_status.
+
+GUARDAR EN EL CONTENEDOR: F1
+
+g. Obtén perfiles con la variable purpose en la categoría de "debt_consolidation" e ingresos (annual_inc) mayores o iguales a 100,000, con todas las columnas.
+
+GUARDAR EN EL CONTENEDOR: G1
+
+h. Obtén las categorías de loan_status que contengan "Late" con un plazo de deuda (term) igual a 60 meses ("60 months").
+
+Con las siguientes columnas: annual_inc, loan_amount, int_rate, term y loan_status.
+
+GUARDAR EN EL CONTENEDOR: H1
+
+i. Obtén perfiles con home_ownership en las categorías de "RENT" o "MORTGAGE", con ingresos (annual_inc) menores a 40,000 y un loan_status de "Fully Paid".
+
+Con las siguientes columnas: annual_inc, home_ownership, purpose, term y loan_status.
+
+GUARDAR EN EL CONTENEDOR: I1
+
+j. Obtén las categorías de loan_status de "Charged Off" con la variable purpose en la categoría de "small_business", con todas las columnas.
+
+GUARDAR EN EL CONTENEDOR: J1
+```{r}
+A1<-df2[df2$annual_inc>50000 & df2$loan_status=="Current",c("annual_inc","int_rate","purpose","term","loan_status")] #ingresos mayores a 50,000 y loan_status "Current"
+
+B1<-df2[df2$annual_inc>50000 & df2$term=="36 months",] #ingresos mayores a 50,000 y plazo de 36 meses, todas las columnas
+
+C1<-df2[df2$loan_status=="Charged Off" & df2$grade=="A",c("annual_inc","int_rate","purpose","term","grade","loan_status")] #loan_status "Charged Off" y grade "A"
+
+D1<-df2[df2$loan_status=="Charged Off" & df2$purpose=="house",] #loan_status "Charged Off" y purpose "house", todas las columnas
+
+E1<-df2[(df2$loan_status=="Fully Paid" | df2$loan_status=="Charged Off") & df2$annual_inc<50000,c("annual_inc","int_rate","purpose","term","grade","loan_status")] #"Fully Paid" o "Charged Off" con ingresos menores a 50,000
+
+F1<-df2[df2$int_rate>15 & (df2$grade=="E" | df2$grade=="F" | df2$grade=="G"),c("annual_inc","int_rate","grade","sub_grade","loan_status")] #tasa de interes mayor al 15% y grade "E", "F" o "G"
+
+G1<-df2[df2$purpose=="debt_consolidation" & df2$annual_inc>=100000,] #purpose "debt_consolidation" e ingresos mayores o iguales a 100,000, todas las columnas
+
+H1<-df2[grepl("Late",df2$loan_status) & df2$term=="60 months",c("annual_inc","loan_amount","int_rate","term","loan_status")] #loan_status que contiene "Late" y plazo de 60 meses
+
+I1<-df2[(df2$home_ownership=="RENT" | df2$home_ownership=="MORTGAGE") & df2$annual_inc<40000 & df2$loan_status=="Fully Paid",c("annual_inc","home_ownership","purpose","term","loan_status")] #"RENT" o "MORTGAGE", ingresos menores a 40,000 y "Fully Paid"
+
+J1<-df2[df2$loan_status=="Charged Off" & df2$purpose=="small_business",] #loan_status "Charged Off" y purpose "small_business", todas las columnas
+```
+3 Correr el siguiente código:
+```{r}
+names(df2)# Ver el resultado de este código.
+```
+¿Cuántos nombres o columnas tiene?
+Respuesta: La base df2 tiene ___ columnas, que son los nombres que aparecen al correr names(df2).
+3.1 Ejecute los siguientes códigos.
+```{r}
+df2$ybinomial<-ifelse(df2$loan_status=="Fully Paid",1,0)
+names(df2) # Ver el resultado de este código.
+unique(df2$ybinomial)# Ver el resultado de este código.
+```
+Anote las siguientes conclusiones:
+a) ¿Qué observó en los nombres de las secciones 3 y 3.1? ¿Cuál es la diferencia? Respuesta: En la sección 3.1 aparecen los mismos nombres que en la sección 3, pero con una columna nueva al final llamada ybinomial. La diferencia es que ahora la base tiene una columna más, porque con df2$ybinomial<- se creó y se agregó esa variable a df2.
+b) ¿Cuáles son los valores o categorías de "unique(df2$ybinomial)"?
+Respuesta: Los valores son 1 y 0. Es 1 cuando el loan_status es "Fully Paid" y 0 cuando es cualquier otra categoría (por ejemplo "Current", "Charged Off" o "Late").
+c) ¿Cuáles son sus conclusiones o cuál es el propósito del código ifelse?
+Respuesta: La función ifelse evalúa una condición en cada fila: si se cumple asigna un valor (1) y si no se cumple asigna otro (0). Sirve para convertir una variable de texto con varias categorías en una variable binaria, lo que facilita separar a los clientes que pagaron completo su crédito de los que no, y se puede usar después en modelos de riesgo de crédito como una regresión logística.
