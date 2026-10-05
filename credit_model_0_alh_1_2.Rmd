@@ -14,7 +14,7 @@ If you want run the original dataset: https://www.kaggle.com/wordsforthewise/len
 R sintaxis: container<-read.xlsx("namedtset.xlsx")
 ******Importe la base de datos usando la ruta de su propia computadora*****
 ```{r}
-cred <- read.csv("C:/Users/carlos/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/cred.csv", header = TRUE)
+cred <- read.csv("C:/Users/carlos/Downloads/cred.csv", header = TRUE)
 ```
 
 Explore the information: the variable loan status has the following features:
