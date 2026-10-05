@@ -1,0 +1,79 @@
+---
+title: "Act3: Perfiles de credito"
+author: "Carlos Roman Ulloa"
+date: "2026-10-05"
+output: html_document
+---
+Actividad: Crear 2 perfiles
+
+1. Importar la base de datos
+```{r}
+dt<-read.csv("C:/Users/carlos/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/df2.csv",header=TRUE)
+
+names(dt) #nombres de las columnas
+unique(dt$loan_status) #categorias de loan_status
+```
+
+2. Permanecen las 2 categorias "Fully Paid" y "Charged Off" en la columna de loan_status, con las caracteristicas: "annual_inc","grade","emp_title","int_rate","loan_amnt" y 2 caracteristicas mas: "home_ownership" y "purpose"
+```{r}
+dtact3<-dt[dt$loan_status=="Fully Paid" | dt$loan_status=="Charged Off",c("loan_status","annual_inc","grade","emp_title","int_rate","loan_amnt","home_ownership","purpose")] #solo Fully Paid y Charged Off con las 7 caracteristicas
+
+unique(dtact3$loan_status) #revisar que solo queden las 2 categorias
+```
+
+3. Crear la variable binaria de pago (1 = Fully Paid, 0 = Charged Off)
+```{r}
+dtact3$loanbin<-ifelse(dtact3$loan_status=="Fully Paid",1,0) #1 = pago, 0 = no pago
+
+unique(dtact3$loanbin) #valores de loanbin
+```
+
+4. Transformar de caracteres (char) a numerico (num)
+```{r}
+str(dtact3) #estructura antes de transformar
+
+dtact3$grade<-as.numeric(as.factor(dtact3$grade)) #grade de char a num (A = 1, B = 2, ...)
+dtact3$emp_title<-as.numeric(as.factor(dtact3$emp_title)) #emp_title de char a num
+dtact3$home_ownership<-as.numeric(as.factor(dtact3$home_ownership)) #home_ownership de char a num
+dtact3$purpose<-as.numeric(as.factor(dtact3$purpose)) #purpose de char a num
+
+str(dtact3) #estructura despues de transformar, todas deben ser num
+```
+
+5. Ejecutar el modelo glm
+```{r}
+modelo3<-glm(loanbin~annual_inc+grade+emp_title+int_rate+loan_amnt+home_ownership+purpose,data=dtact3,family=binomial()) #modelo logit
+
+summary(modelo3) #resultados del modelo
+```
+
+6. Crear los 2 perfiles
+annual_inc+grade+emp_title+int_rate+loan_amnt
+perfil1=81013,3,558,6,14924 ; home_ownership=1 ; purpose=2
+perfil2=50720,2,610,20,35000 ; home_ownership=2 ; purpose=11
+```{r}
+perfil1<-data.frame(annual_inc=81013,grade=3,emp_title=558,int_rate=6,loan_amnt=14924,home_ownership=1,purpose=2) #perfil 1
+perfil2<-data.frame(annual_inc=50720,grade=2,emp_title=610,int_rate=20,loan_amnt=35000,home_ownership=2,purpose=11) #perfil 2
+
+perfil1
+perfil2
+```
+
+7. Obtener la probabilidad de pago vs no pago para los clientes
+```{r}
+pago1<-predict(modelo3,newdata=perfil1,type="response") #probabilidad de pago del perfil 1
+pago2<-predict(modelo3,newdata=perfil2,type="response") #probabilidad de pago del perfil 2
+
+nopago1<-1-pago1 #probabilidad de no pago del perfil 1
+nopago2<-1-pago2 #probabilidad de no pago del perfil 2
+
+pago1
+nopago1
+
+pago2
+nopago2
+```
+
+8. Conclusiones
+
+El perfil 1 tiene una probabilidad de pago de ___ y de no pago de ___, mientras que el perfil 2 tiene una probabilidad de pago de ___ y de no pago de ___. Se espera que el perfil 1 tenga menor riesgo, ya que tiene un ingreso mayor (81,013 contra 50,720), una tasa de interes mucho menor (6% contra 20%) y pide un monto menor (14,924 contra 35,000). El perfil 2 pide mas del doble de dinero con menos ingreso y una tasa alta, lo que aumenta su probabilidad de no pago. Con el modelo logit se puede medir el riesgo de cada cliente antes de otorgarle el credito.
