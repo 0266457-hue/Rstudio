@@ -1,0 +1,233 @@
+---
+title: "Risk Credit Analysis; Universidad Panamericana by Alejandro Lome Hurtado"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r warning=FALSE, message=FALSE}
+rm(list=ls())
+```
+
+## Credit analysis
+The database df2.xlsx has information of lendingclub, https://www.lendingclub.com/ fintech marketplace bank at scale. One of the spreadsheets has the variable description. The original dataset has at least 2 million observations and 150 variables. For this example, we are using only 1,000 observations and 26 variables. 
+If you want run the original dataset: https://www.kaggle.com/wordsforthewise/lending-club
+R sintaxis: container<-read.xlsx("namedtset.xlsx")
+******Importe la base de datos usando la ruta de su propia computadora*****
+```{r}
+cred <- read.csv("C:/Users/carlos/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/cred.csv", header = TRUE)
+```
+
+Explore the information: the variable loan status has the following features:
+R sintaxis: names, head, tail ,unique
+```{r}
+names(cred)
+head(cred)
+unique(cred$grade)
+```
+
+We are interested only in the Fully Paid and Charged Off features, which are equivalent to no-default and default respectively. 
+
+Charge off" means that the credit grantor wrote your account off of their receivables as a loss, and it is closed to future charges. When an account displays a status of "charge off," it means the account is closed to future use, although the debt is still owed.
+
+The head and tail of loan status look like this:
+Create a filter, in such a way that the loan_status (ind vr) contains only Fully Paid and Charged Off (categories). #Get just Fully Paid & Charged Off.
+R sintaxis: namedt<-dt[rows,col´s]
+Use the logical operators: |/& 
+```{r echo=FALSE}
+```
+
+Dealing with NA´s values
+```{r echo=FALSE}
+unique(cred$loan_status)
+cred1<-cred[cred$loan_status=="Fully Paid"|cred$loan_status=="Charged Off",]
+unique(cred$loan_status)#verificar
+```
+Use the na.omit function to eliminate all the NA´s, and run again the function to count Nas by column, sum
+```{r echo=FALSE}
+```
+
+The variable loan_status must be (0,1), if Fully Paid then 1, and Charged Off, 0. Use the ifelse function to create that variable, call it "ybinomial". Also, eliminate the loan_status variable (otherwise it would be duplicated). Print the head and tail of the object. 
+Hence, the dependent vr is "ybinomial"
+Sintaxis: ifelse(condition, 1, 0)
+If condition meets then apply 1, otherwise 0
+Save the result in the new vr: ybinomial; save it in the df3
+```{r}
+cred1 <- cred[cred$loan_status == "Fully Paid" | cred$loan_status == "Charged Off", ]
+cred1$ybinomial <- ifelse(cred1$loan_status == "Fully Paid", 1, 0)
+cred1$loan_status <- NULL
+
+head(cred1)
+tail(cred1)
+```
+
+
+1. Choose the following col´s or variables:
+a) Dependent variables: ybinomial
+b) Independent variables : annual_inc,grade,emp_title,int_rate,loan_amnt
+2. Transform them to numeric (from "char" to "num")
+```{r}
+cred2<-cred1[, c("ybinomial", "annual_inc", "grade", "emp_title", "int_rate", "loan_amnt")]
+names(cred2)
+str(cred2)
+cred2$grade<-as.numeric(as.factor(cred2$grade))
+class(cred2$grade)
+cred2$emp_title<-as.numeric(as.factor(cred2$emp_title))
+class(cred2$emp_title)
+str(cred2)
+```
+
+## LOGISTIC REGRESSION  ############
+The linear regression assumes that the response variable Y is quantitative. But in many situations, the response variable is instead qualitative. For example, eye color is qualitative, taking on values blue, brown, or green. Often qualitative variables are referred to as categorical ; we will use these terms interchangeably.
+In a binary response model, interest lies primarily in the response probability. However, we can not use the OLS to estimate the model, because it is a not linear binary response model. Then we apply Logistic regression.
+#########################################################################
+
+STEPS TO ACCOUNT THE RISK TO PAY (FULLY PAID) OR NOT PAY (CHARGED OFF)
+
+1. RUN THE GLM MODEL(include just 4 vr´s)
+Sintaxis: container<- glm(y ~x1+x2,data=nameofdt,family=binomial())
+Expresión explícita del Modelo:
+ybinomial= annual_inc + loan_amnt + term +int_rate
+```{r}
+names(cred2)
+mod1<-glm(ybinomial~annual_inc+grade+emp_title+int_rate+loan_amnt,data=cred2, family=binomial())
+summary(mod1)
+```
+???? obtener la probabilidad que nos paguen vs no nos paguen nuesvos clientes 
+RESULTADO DEL MODELO BINOMIAL:
+ln(ybinomial)= 4.672e+00 + annual_inc*4.149e-06 + loan_amnt*1.815e-05  + term*-9.449e-01 +int_rate*-1.750e-01...
+
+annual_inc+grade+emp_title+int_rate+loan_amnt
+2. CREATE 2 PROFILES:  annual_inc + loan_amnt + term +int_rate
+perf1:annual_inc=81013; grade= 3; emp_title=558;int_rate=6;loan_amnt=14924   
+perf2:annual_inc=50720;grade= 2; emp_title=610;int_rate=20;loan_amnt=35000    
+
+2.1 Explorar las características de las variables señaladas (opcional)
+```{r}
+```
+
+3. CREATE THE PROFILES, unálos con rbind en un container=perfiles, transforme en dataframe y asigne los nombres
+annual_inc+grade+emp_title+int_rate+loan_amnt
+perfil1=81013,3,558,6,14924
+perfil2=50720,2,610,20,35000
+```{r}
+perfil1<-c(81013,3,558,6,14924)
+perfil2<-c(50720,2,610,20,35000)
+perfiles<-rbind(perfil1,perfil2)
+perfiles<-as.data.frame(perfiles)
+names(perfiles)[1:5]<-c("annual_inc","grade","emp_title","int_rate","loan_amnt")
+```
+
+4.INTRODUCE THE PROFILE DATA IN THE MODEL (result in Logarithms)
+ln(ybinomial)= 2.881e + annual_inc*5.466e-06 + loan_amnt*2.098e-05+ term*-8.883e-01 +int_rate*-1.344e-01
+2 OPTIONS:
+a) Using: predict(nameofmodel,newdata=perfiles) y save in "predicted_test"
+```{r}
+predicted_test<-predict(mod1,perfiles)
+predicted_test #tranformar el resultado en probabilidades
+```
+
+5. Transform the Log result into Probabilities (Measuring the Risk of Getting Paid: Fully Paid).
+
+a) Enter the result given in Log Format into the following formula and save it as "prob":
+Sintaxis: prob<-exp(predicted_test)/(1+exp(predicted_test))
+b) By hand (si se quiere hacer paso a paso)
+𝑝𝑖(ybinomial=1)=  𝑒^(2.881e + annual_inc*5.466e-06 + loan_amnt*2.098e-05  + term*-8.883e-01 +int_rate*-1.344e-01)/(1+ 𝑒^(2.881e + annual_inc*5.466e-06 + loan_amnt*2.098e-05  + term*-8.883e-01 +int_rate*-1.344e-01)
+```{r}
+probabilidad<-exp(predicted_test)/(1+exp(predicted_test)) #quitar logaritmo
+probabilidad #probablidad de que me paguen vs que no me paguen (riesgo)
+```
+
+Actividad: Crear 2 perfiles:  
+PERMANECE: LAS 2 CATEGORIAS FULLY PAID Y CHARGED OFF
+CAMBIO: AGREGAR MÁS VARIABLES O CARACTERÍSTICAS DE LOS PERFILES
+1. annual_inc + loan_amnt + term+"int_rate CON LOS DATOS ANTERIORES Y
+
+1.1 ANEXANDO 2 VARIABLES MÁS:
+a) grade +
+b) home_ownership para ambos perfiles
+Nota: transformarlas de "char" a "num"
+```{r}
+cred2 <- cred1[, c("ybinomial", "annual_inc", "loan_amnt", "int_rate", "grade", "home_ownership")]
+cred2$grade <- as.numeric(as.factor(cred2$grade))
+cred2$home_ownership <- as.numeric(as.factor(cred2$home_ownership))
+str(cred2)
+
+mod2 <- glm(ybinomial ~ annual_inc + loan_amnt + int_rate + grade + home_ownership, data = cred2, family = binomial())
+
+summary(mod2)
+```
+
+1.2 Mida el Riesgo de ambos perfiles (Presente los resultados)
+
+CUANDO CREEMOS LOS PERFILES ANEXAR/ASIGNAR PARA LA VARIABLE "GRADE" EL VALOR=1
+Y PARA LA VR "home_ownership"=1 PARA AMBOS PERFILES
+
+perf1<-c(81013,8000,1,6) #datos del perfil 1
+
+perf2<-c(50720,8000,2,20) #datos del perfil 2
+
+1.4 Mida el Riesgo de ambos perfiles (Presente los resultados)
+
+```{r}
+perf1 <- c(81013, 8000, 6, 1, 1)
+perf2 <- c(50720, 8000, 20, 1, 1)
+perfiles <- rbind(perf1, perf2)
+perfiles <- as.data.frame(perfiles)
+names(perfiles) <- c("annual_inc", "loan_amnt", "int_rate", "grade", "home_ownership")
+predicted_test2 <- predict(mod2, newdata = perfiles)
+probabilidad2 <- exp(predicted_test2) / (1 + exp(predicted_test2))
+probabilidad2
+```
+
+
+NUEVA ACTIVIDAD
+1.3 Anexe ahora aquellos clientes con los datos anteriores que piden un crédito por razones médicas para el perfil 1 (purpose==medical) y para comprar un carro (perfil 2)
+```{r}
+cred2<-cred1[, c("ybinomial", "annual_inc", "loan_amnt", "int_rate", "grade", "home_ownership", "purpose")]
+cred2$grade<-as.numeric(as.factor(cred2$grade))
+cred2$home_ownership<-as.numeric(as.factor(cred2$home_ownership))
+cred2$purpose<-as.numeric(as.factor(cred2$purpose))
+str(cred2)
+mod3<-glm(ybinomial~annual_inc+loan_amnt+int_rate+grade+home_ownership+purpose,data=cred2, family=binomial())
+summary(mod3)
+
+perf1<-c(81013,8000,6,1,1,8)
+perf2<-c(50720,8000,20,1,1,2)
+perfiles3<-rbind(perf1,perf2)
+perfiles3<-as.data.frame(perfiles3)
+names(perfiles3)[1:6]<-c("annual_inc","loan_amnt","int_rate","grade","home_ownership","purpose")
+
+predicted_test3<-predict(mod3,perfiles3)
+
+probabilidad3<-exp(predicted_test3)/(1+exp(predicted_test3))
+probabilidad3
+```
+ACTIVIDAD 2 
+PERMANECE: LAS 2 CATEGORIAS FULLY PAID Y CHARGED OFF en la columna de LOAN STATUS
+CON LAS SIGUIENTES CARATERISTICAS: "annual_inc","grade","emp_title","int_rate","loan_amnt"
+AGREGAR 2 CARACTERÍSTICAS MÁS:
+"home_ownership"= 1 y 2 (para el perfil1 y perfil 2 respectivamente)
+purpose= 2, 11 (para el perfil1 y perfil 2 respectivamente)
+Y CON LA SIGUIENTE INFORMARCIÓN:
+annual_inc+grade+emp_title+int_rate+loan_amnt
+perfil1=81013,3,558,6,14924
+perfil2=50720,2,610,20,35000
+OBTENER LA PROB DE PAGO VS NO PAGO PARA LOS CLIENTES:
+
+```{r}
+cred2<-cred1[, c("ybinomial", "annual_inc", "grade", "emp_title", "int_rate", "loan_amnt", "home_ownership", "purpose")]
+cred2$grade<-as.numeric(as.factor(cred2$grade))
+cred2$emp_title<-as.numeric(as.factor(cred2$emp_title))
+cred2$home_ownership<-as.numeric(as.factor(cred2$home_ownership))
+cred2$purpose<-as.numeric(as.factor(cred2$purpose))
+str(cred2)
+mod_act2<-glm(ybinomial~annual_inc+grade+emp_title+int_rate+loan_amnt+home_ownership+purpose,data=cred2, family=binomial())
+summary(mod_act2)
+perf1<-c(81013, 3, 558, 6, 14924, 1, 2)
+perf2<-c(50720, 2, 610, 20, 35000, 2, 11)
+perfiles_act2<-rbind(perf1, perf2)
+perfiles_act2<-as.data.frame(perfiles_act2)
+names(perfiles_act2)[1:7]<-c("annual_inc","grade","emp_title","int_rate","loan_amnt","home_ownership","purpose")
+predicted_act2<-predict(mod_act2, perfiles_act2)
+probabilidad_act2<-exp(predicted_act2)/(1+exp(predicted_act2))
+probabilidad_act2
