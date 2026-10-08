@@ -1,0 +1,109 @@
+---
+title: "HW 4: Get Prob"
+author: "Carlos Roman Ulloa"
+date: "2026-10-08"
+output: html_document
+---
+NOTA: En cada paso usar nombre de containers apropiados, y utilizar siempre la última base de datos creada.
+
+1. Importar dt (usando read.xlsx o read.csv)
+```{r}
+cred<-read.csv("C:/Users/carlos/Downloads/cred.csv",header=TRUE)
+```
+
+2. Explorar el conjunto de datos (data set)
+Sintaxis en R: names, head, tail, unique, str, summary
+```{r}
+names(cred)
+head(cred)
+tail(cred)
+unique(cred$loan_status)
+str(cred)
+summary(cred$annual_inc)
+summary(cred$loan_amnt)
+```
+
+3. Obtener el siguiente perfil:
+a) "Fully Paid" y b) "Late (31-120 days)" con ingresos (annual_inc) superiores a 10,000, un monto de préstamo (loan_amnt) mayor a 30,00.
+Sintaxis en R: namedt <- dt[filas, columnas]
+Usar los operadores lógicos: | / &
+```{r}
+cred2<-cred[(cred$loan_status=="Fully Paid"|cred$loan_status=="Late (31-120 days)")&cred$annual_inc>10000&cred$loan_amnt>3000,]
+unique(cred2$loan_status) #verificar
+summary(cred2$annual_inc) #verificar ingresos mayores a 10,000
+summary(cred2$loan_amnt) #verificar monto mayor a 3,000
+```
+
+4. Seleccionar las siguientes variables (vr's):
+loan_status + annual_inc + loan_amnt + term + int_rate + home_ownership + grade
+```{r}
+cred3<-cred2[,c("loan_status","annual_inc","loan_amnt","term","int_rate","home_ownership","grade")]
+names(cred3)
+```
+
+5. Crear una variable binaria de incumplimiento (default) para el modelo regresión logística:
+La variable loan_status debe convertirse en la variable respuesta binaria (0,1). Si loan_status es "Fully Paid" asigna 1 (cliente cumplido), de otra forma 0. Nómbrala: default_bin.
+Sintaxis: ifelse(condicion, 1, 0)
+```{r}
+cred3$default_bin<-ifelse(cred3$loan_status=="Fully Paid",1,0)
+unique(cred3$default_bin)
+cred3$loan_status<-NULL #eliminar loan_status para que no se duplique
+```
+
+6. Transformar de caracteres (char) y factores a variables numéricas (num) para ejecutar el modelo y revisar nuevamente la estructura para asegurar que todas las variables explicativas sean numéricas.
+```{r}
+str(cred3)
+unique(cred3$term)
+unique(cred3$home_ownership)
+unique(cred3$grade)
+
+cred3$term_num<-as.numeric(as.factor(cred3$term)) #36 months = 1, 60 months = 2
+cred3$home_ownership_num<-as.numeric(as.factor(cred3$home_ownership)) #orden alfabetico (MORTGAGE = 1, ...)
+cred3$grade_num<-as.numeric(as.factor(cred3$grade)) #A = 1, B = 2, C = 3, D = 4, E = 5, ...
+
+table(cred3$term,cred3$term_num) #verificar codigos
+table(cred3$home_ownership,cred3$home_ownership_num) #verificar codigos
+table(cred3$grade,cred3$grade_num) #verificar codigos
+
+cred4<-cred3[,c("default_bin","annual_inc","loan_amnt","term_num","int_rate","home_ownership_num","grade_num")]
+str(cred4) #todas deben ser num
+```
+
+7. Ejecutar el modelo de regresión logística múltiple (glm) para predecir la probabilidad de incumplimiento:
+```{r}
+names(cred4)
+mod1<-glm(default_bin~annual_inc+loan_amnt+term_num+int_rate+home_ownership_num+grade_num,data=cred4,family=binomial())
+summary(mod1)
+```
+
+8. Definir los siguientes perfiles de clientes para evaluar su riesgo crediticio:
+annual_inc + loan_amnt + term + int_rate + home_ownership + grade
+perf1: annual_inc = 120000; loan_amnt = 15000; term_num = 1 (36 months); int_rate = (CETES 28 días actual); home_ownership_num = 1 (MORTGAGE); grade_num = 1 (A)
+perf2: annual_inc = 35000; loan_amnt = 25000; term_num = 2 (60 months); int_rate = 18.5 (Tasa de alto riesgo); home_ownership_num = 2 (RENT); grade_num = 5 (E)
+```{r}
+perf1<-c(120000,15000,1,6.01,1,1) #CETES 28 dias = 6.01
+perf2<-c(35000,25000,2,18.5,2,5)
+perfs<-rbind(perf1,perf2)
+perfs<-as.data.frame(perfs)
+names(perfs)[1:6]<-c("annual_inc","loan_amnt","term_num","int_rate","home_ownership_num","grade_num")
+perfs
+```
+
+9. Introducir dichos perfiles en el modelo utilizando la función predict:
+```{r}
+predicted_test<-predict(mod1,perfs)
+predicted_test #resultado en logaritmo
+```
+
+10. Medir el riesgo de cada perfil (obtener las probabilidades estimadas de default)
+```{r}
+probabilidad<-exp(predicted_test)/(1+exp(predicted_test)) #quitar logaritmo
+probabilidad #probabilidad de que paguen (Fully Paid)
+
+prob_default<-1-probabilidad
+prob_default #probabilidad de incumplimiento (default)
+```
+
+11. Escribe tus conclusiones analizando qué variable tuvo el mayor impacto (observar los “estimates” del model de regresión) en el incremento de la probabilidad de incumplimiento entre perf1 y perf2.
+
+El perfil 1 tiene una probabilidad de pago de ___ y de incumplimiento de ___, mientras que el perfil 2 tiene una probabilidad de pago de ___ y de incumplimiento de ___. Por lo tanto el perfil 2 es mucho más riesgoso. Como default_bin vale 1 cuando el cliente paga, un estimate negativo en el modelo significa que esa variable baja la probabilidad de pago y sube la de incumplimiento. Para ver qué variable tuvo mayor impacto entre los dos perfiles se multiplica cada estimate por la diferencia entre perf2 y perf1: la tasa de interés (18.5 contra 6.01, una diferencia de 12.49 puntos) y el grade (E contra A, 4 niveles) son las que más pesan, porque tienen estimates negativos y la mayor diferencia entre perfiles. La variable con mayor impacto fue ___, seguida de ___. También influyen el plazo más largo (60 meses), el menor ingreso (35,000 contra 120,000) y el mayor monto del préstamo del perfil 2.
