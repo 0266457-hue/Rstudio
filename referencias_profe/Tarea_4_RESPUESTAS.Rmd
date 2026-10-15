@@ -1,0 +1,87 @@
+---
+title: "HM3"
+author: "Me"
+date: "2026-10-06"
+output: html_document
+---
+1.	Importar dt (usando read.xlsx o read.csv)
+```{r}
+rm(list = ls()) #borra toda la información precargada en R
+cred<-read.csv("C:/Users/alexlome/Documents/UP/MATERIAS/Riesgo Créd y Mdo 24/R codes/df2.csv",header = TRUE)
+```
+2.	Explorar el conjunto de datos (data set) Sintaxis en R: names, head, tail, unique
+```{r}
+head(cred)
+tail(cred)
+```
+
+a) "Fully Paid" y b) "Late (31-120 days)" con ingresos (annual_inc) superiores a 10,000, un monto de préstamo (loan_amnt) mayor a 3,000.
+```{r}
+unique(cred$loan_status)
+unique(cred$term)
+cred3<-cred[(cred$loan_status=="Fully Paid"|cred$loan_status=="Late (31-120 days)")&cred$annual_inc>10000 & cred$loan_amnt>3000,]
+unique(cred3$loan_status) #comprobar 
+min(cred3$annual_inc) #comprobar 
+min(cred3$loan_amnt) #comprobar 
+```
+
+ Seleccionar las siguientes variables (vr's):
+loan_status + annual_inc + loan_amnt + term + int_rate + home_ownership + grade
+```{r}
+names(cred2)
+cred4<-cred3[,c("loan_status","annual_inc", "loan_amnt","term", "int_rate","home_ownership", "grade")]
+names(cred4) #comprobar
+```
+
+La variable loan_status debe convertirse en la variable respuesta binaria (0,1). Si loan_status es "Fully Paid" asigna 1 (cliente cumplido), de otra forma 0. Nómbrala: default_bin.
+```{r}
+unique(cred4$loan_status)
+cred4$loanbin<-ifelse(cred4$loan_status=="Fully Paid",1,0)
+unique(cred4$loanbin)
+```
+
+6.	Transformar de caracteres (char) a numérico (num) (para ejecutar el modelo) las variables contenidas en el conjunto de datos y revisar nuevamente la estructura para asegurarte de que todas las variables sean numéricas. Sintaxis en R: nombredevr <- as.numeric(as.factor(nombredevr))
+```{r}
+str(cred4)
+cred4$term<-as.numeric(as.factor(cred4$term))
+cred4$home_ownership<-as.numeric(as.factor(cred4$home_ownership))
+cred4$grade<-as.numeric(as.factor(cred4$grade))
+str(cred4)
+```
+7.	Ejecutar el modelo glm Sintaxis: glm(y ~ x1 + x2 + ..., data = dt, family = binomial())
+```{r}
+names(cred4)
+mod1<-glm(loanbin ~ annual_inc+loan_amnt+term+int_rate+home_ownership+grade,data = cred4, family = binomial())
+summary(mod1)
+```
+
+8.	Definir los siguientes perfiles de clientes para evaluar su riesgo crediticio:
+annual_inc + loan_amnt + term + int_rate + home_ownership + grade
+
+perf1: annual_inc = 120000; loan_amnt = 15000; term_num = 1 (36 months); int_rate = (CETES 28 días actual); home_ownership_num = 1 (MORTGAGE); grade_num = 1 (A)
+
+perf2: annual_inc = 35000; loan_amnt = 25000; term_num = 2 (60 months); int_rate = 18.5 (Tasa de alto riesgo); home_ownership_num = 2 (RENT); grade_num = 5 (E)
+```{r}
+unique(cred$home_ownership)
+per1<-c(120000,15000,1,6.01,1,1)
+per2<-c(35000,25000,2,18.5,2,5)
+perfs<-rbind(per1,per2)
+perfs<-as.data.frame(perfs)
+names(perfs)[1:6]<-c("annual_inc","loan_amnt","term","int_rate","home_ownership","grade")
+perfs
+```
+9.	Introducir dichos perfiles en el modelo
+```{r}
+predicted_test<-predict(mod1,perfs)
+predicted_test
+```
+10.	Medir el riesgo de cada perfil (obtener las probabilidades)
+```{r}
+probabilidad<-exp(predicted_test)/(1+exp(predicted_test)) #quitar logaritmo
+probabilidad
+
+mod1$coefficients
+
+exp(mod1$coefficients)
+```
+

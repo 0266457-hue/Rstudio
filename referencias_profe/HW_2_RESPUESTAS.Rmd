@@ -1,0 +1,75 @@
+1. Importar dt (usando read.xlsx o read.csv)
+```{r}
+dt<-read.csv("C:/Users/carlos/OneDrive/Riesgo, Credito y Mercado/Segundo Parcial R/dt.csv",header=TRUE)
+```
+
+2. Explorar el conjunto de datos (data set)
+Sintaxis en R: names, head, tail, unique
+```{r}
+
+head(cred) 
+tail(cred)
+```
+
+3. Obtener el siguiente perfil: a) "Fully Paid" y b) "Charged Off" con ingresos mayores a c) 15,000 y con un plazo largo (term).
+Sintaxis en R: namedt <- dt[filas, columnas]
+Usar los operadores lógicos: | / &
+Usar nombres adecuados
+```{r}
+unique(cred$loan_status)
+unique(cred$term)
+cred2<-cred[(cred$loan_status=="Fully Paid"|cred$loan_status=="Charged off")&cred$annual_inc>15000&cred$term=="60 months",]
+unique(cred2$loan_status)
+unique(cred2$term)
+summary(cred2$annual_inc)
+     
+```
+4. Seleccionar las siguientes variables (vr's): loan_status + annual_inc + loan_amnt + term + int_rate
+```{r}
+cred3<-cred2[,c("loan_status","anual_inc","loan_amnt","term","int_rate")]
+names(cred3)
+```
+5. La variable loan_status debe ser (0,1): si es "Fully Paid" asigna 1, y si es "Charged Off", 0. Usa la función ifelse para crear esa variable; nómbrala loanbin.
+Sintaxis: ifelse(condicion, 1, 0)
+Si la condición se cumple asigna 1, de lo contrario 0.
+```{r}
+cred3$loanbin<-ifelse(cred3$loan_status=="Fully Pais",1,0)
+unique(cred3loanbin)
+```
+6. Transformar de caracteres (char) a numérico (num) (para ejecutar el modelo) las variables contenidas en el conjunto de datos y revisar nuevamente la estructura para asegurarte de que todas las variables sean numéricas.
+Sintaxis en R: nombredevr <- as.numeric(as.factor(nombredevr))
+```{r}
+str(cred3)
+cred3$term<-as.numeric(as.factor(cred3$term))
+```
+
+7. Ejecutar el modelo glm
+Sintaxis: glm(y ~ x1 + x2 + ..., data = dt, family = binomial())
+```{r}
+names(cred3)
+glm(loanbin ~ annual_inc+loan_amnt+term+int_rate, data = cred3, family = binomial())
+summary(mod1)
+```
+
+8. Obtener los siguientes perfiles:
+perf1: annual_inc = 70000; loan_amnt = 5000; term = 1 (36 months); int_rate = CETES 28 días (anual)
+perf2: annual_inc = 40020; loan_amnt = 5000; term = 2 (60 months); int_rate = CETES 28 días (anual)
+```{r}
+perl<-c(70000,5000,1,6.01)
+pel2<-c(40020,5000,1,6.01)
+perfs<-rbind(per1,per2)
+perfs<-as.data.frame(perfs)
+names(perfs)[1:4]<-c("annual_inc","loan_amnt","term","int_rate")
+```
+
+9. Introducir dichos perfiles en el modelo
+```{r}
+predicted_test<-predict(mod1,perfs)
+predicted_test
+```
+
+10. Medir el riesgo de cada perfil (obtener las probabilidades)
+```{r}
+probabilidad<-exp(predicted_test)/(1+exp(predicted_test)) #quitar logaritmno
+probabilidad
+```

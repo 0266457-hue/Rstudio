@@ -18,3 +18,10 @@ No agregar pasos extra que el no usa (`table()`, columnas `_num`, `NULL`, `1-pro
 - Si un monto viene mal escrito (ej. "30,00"), el profesor lo toma como 3,000.
 - CETES 28 dias usado por el profesor: 6.01.
 - Codigo sin espacios en la asignacion (`x<-c(...)`) y comentarios cortos con `#`.
+
+## Referencias del profesor (usar como modelo)
+- `referencias_profe/HW_2_RESPUESTAS.Rmd` - solucion HW 2.
+- `referencias_profe/Tarea_4_RESPUESTAS.Rmd` - solucion Tarea 4.
+- `referencias_profe/credit_model_0_alh_1_2.Rmd` - archivo de clase del modelo de credito.
+
+Copiar su sintaxis y estructura, pero NO sus errores de dedo (ej. "Charged off", "anual_inc", "Fully Pais", `cred3loanbin`, `glm` sin guardar en `mod1`, `perl`/`pel2`, `names(cred2)` sin existir).
