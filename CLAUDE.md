@@ -1,9 +1,12 @@
 # Tareas de R (Riesgo, Credito y Mercado) - Carlos Roman Ulloa
 
-Resolver las tareas en `.Rmd` siguiendo la forma de resolver del profesor:
+Resolver las tareas en `.Rmd` apegandose lo mas posible a la forma de resolver del profesor.
+No agregar pasos extra que el no usa (`table()`, columnas `_num`, `NULL`, `1-probabilidad`, etc.); solo lo que pide la tarea y con su misma sintaxis. Si la tarea pide conclusiones, escribirlas breves.
 
 - Ruta de datos: `C:/Users/carlos/...` (si el archivo trae otra ruta, solo cambiar el usuario por `carlos`).
 - Base principal en `cred` y cada paso en un contenedor nuevo: `cred2`, `cred3`, ...
+- Exploracion: `head()` y `tail()`; comprobar filtros con `unique()` y `min()` con comentario `#comprobar`.
+- Nombres como el profesor: binaria `loanbin`, perfiles `per1`/`per2`, `perfs`, `mod1`, `predicted_test`, `probabilidad`.
 - Filtrar filas primero con todas las columnas (`cred2<-cred[(cond1|cond2)&cond3,]`), luego seleccionar columnas aparte (`cred3<-cred2[,c(...)]`).
 - Verificar cada paso con `unique()`, `names()`, `str()` o `summary()`.
 - Iniciar el primer chunk con `rm(list = ls())`.
