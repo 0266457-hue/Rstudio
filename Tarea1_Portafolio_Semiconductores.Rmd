@@ -7,7 +7,7 @@ output:
   html_document: default
 header-includes:
   - \usepackage{fvextra}
-  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
 ---
 Mercado seleccionado: SEMICONDUCTORES (10 acciones)
 
