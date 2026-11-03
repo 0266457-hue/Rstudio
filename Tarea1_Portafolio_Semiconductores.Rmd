@@ -1,6 +1,11 @@
 ---
 title: "Tarea 1: Portafolio Mercado de Semiconductores"
-author: "Carlos Roman Ulloa"
+author:
+  - "Equipo 5"
+  - "Pablo De Anda Michel"
+  - "Job Eduardo Martínez Mejía"
+  - "Carlos Román Ulloa"
+  - "Maurizio Toscano Arceo"
 date: "2026-11-03"
 output:
   pdf_document: default
