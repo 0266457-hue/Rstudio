@@ -2,7 +2,12 @@
 title: "Tarea 1: Portafolio Mercado de Semiconductores"
 author: "Carlos Roman Ulloa"
 date: "2026-11-03"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
 ---
 Mercado seleccionado: SEMICONDUCTORES (10 acciones)
 
