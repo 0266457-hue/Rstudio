@@ -34,6 +34,7 @@ ticker7<-"ASML"
 ticker8<-"MU"
 ticker9<-"TXN"
 ticker10<-"AMAT"
+tickers<-c(ticker1,ticker2,ticker3,ticker4,ticker5,ticker6,ticker7,ticker8,ticker9,ticker10) #nombres cortos para graficas
 
 stocks1<-getSymbols(ticker1,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
 stocks2<-getSymbols(ticker2,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
@@ -96,12 +97,12 @@ individual
 
 Graficas individuales
 ```{r}
-barplot(meanret,main="Rendimiento diario",las=2,col="blue")
-barplot(sdstocks,main="Riesgo diario",las=2,col="red")
-barplot(sharpestocks,main="Sharpe diario",las=2,col="green")
+barplot(meanret,names.arg=tickers,main="Rendimiento diario",las=2,col="blue")
+barplot(sdstocks,names.arg=tickers,main="Riesgo diario",las=2,col="red")
+barplot(sharpestocks,names.arg=tickers,main="Sharpe diario",las=2,col="green")
 
 plot(sdstocks,meanret,main="Riesgo vs Rendimiento",xlab="risk",ylab="return",pch=19)
-text(sdstocks,meanret,labels=names(ret),pos=3,cex=0.7)
+text(sdstocks,meanret,labels=tickers,pos=3,cex=0.7)
 ```
 
 Conclusion: la accion de mayor rendimiento es `r names(which.max(meanret))`, la de menor riesgo es `r names(which.min(sdstocks))` y la de mejor sharpe (mejor relacion rendimiento-riesgo) es `r names(which.max(sharpestocks))`.
@@ -143,10 +144,10 @@ portfolio
 
 Graficas del portafolio
 ```{r}
-barplot(weights,names.arg=names(ret),main="Pesos del portafolio",las=2,col="blue")
+barplot(weights,names.arg=tickers,main="Pesos del portafolio",las=2,col="blue")
 
 plot(sdstocks,meanret,main="Acciones vs Portafolio",xlab="risk",ylab="return",pch=19,xlim=c(0,max(sdstocks)))
-text(sdstocks,meanret,labels=names(ret),pos=3,cex=0.7)
+text(sdstocks,meanret,labels=tickers,pos=3,cex=0.7)
 points(sd,portreturn,col="red",pch=19,cex=2)
 text(sd,portreturn,labels="Portafolio",pos=1,col="red")
 ```
@@ -224,6 +225,8 @@ points(MaxSharpe$risk[1:3],MaxSharpe$return[1:3],col="green",pch=19)
 legend("bottomright",legend=c("Min Risk","Max Return","Max Sharpe"),col=c("blue","red","green"),pch=19)
 ```
 
+Conclusion de la optimizacion: el portafolio de menor riesgo pone mas peso en TXN y TSM (las acciones menos volatiles); el de mayor rendimiento y el de mayor sharpe ponen mas peso en MU, NVDA y TSM. En esta simulacion el portafolio #1 de maximo rendimiento es tambien el #1 de maximo sharpe.
+
 5. Compare sus resultados con el rendimiento y riesgo del S&P500 y el IPC (mismo periodo).
 ```{r}
 sp<-getSymbols("^GSPC",from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
@@ -268,7 +271,8 @@ barplot(comparacion$sharpe,names.arg=rownames(comparacion),main="Sharpe diario",
 
 Conclusiones:
 
-- Adverso al riesgo: se recomienda el portafolio de minimo riesgo (riesgo diario `r round(MinRisk$risk[1],4)` vs `r round(sd_sp,4)` del S&P500 y `r round(sd_ipc,4)` del IPC); concentra su peso en las acciones menos volatiles del sector.
-- Propenso al riesgo: se recomienda el portafolio de maximo rendimiento (rendimiento anual `r round(MaxRet$return[1]*21*12*100,2)`% vs `r round(meanret_sp*21*12*100,2)`% del S&P500 y `r round(meanret_ipc*21*12*100,2)`% del IPC), aceptando mayor volatilidad.
-- Cliente medio: se recomienda el portafolio de maximo sharpe (`r round(MaxSharpe$sharpe[1],4)`), que da el mejor rendimiento por unidad de riesgo.
-- El mercado de semiconductores tiene mas riesgo que los indices (S&P500 e IPC) porque es un solo sector; a cambio ofrece mayor rendimiento esperado. El IPC esta en pesos, por lo que la comparacion no incluye el efecto del tipo de cambio.
+- Los 4 portafolios de semiconductores superan por mucho el rendimiento del S&P500 y del IPC, pero con mas del doble de riesgo diario.
+- Adverso al riesgo: dentro del sector, el portafolio de minimo riesgo (riesgo diario `r round(MinRisk$risk[1],4)`). Aun asi es mas riesgoso que el S&P500 (`r round(sd_sp,4)`) y su sharpe (`r round(MinRisk$sharpe[1],4)`) es menor que el del S&P500 (`r round(sharpe_sp,4)`), por lo que a un cliente muy conservador le conviene combinarlo con el indice.
+- Propenso al riesgo: el portafolio de maximo rendimiento (rendimiento anual `r round(MaxRet$return[1]*21*12*100,2)`% vs `r round(meanret_sp*21*12*100,2)`% del S&P500 y `r round(meanret_ipc*21*12*100,2)`% del IPC), aceptando mayor volatilidad.
+- Cliente medio: el portafolio de maximo sharpe (`r round(MaxSharpe$sharpe[1],4)`), que da el mejor rendimiento por unidad de riesgo y supera al S&P500 y al IPC.
+- El IPC tiene el peor sharpe (`r round(sharpe_ipc,4)`). Esta en pesos, por lo que la comparacion no incluye el efecto del tipo de cambio.
