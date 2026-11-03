@@ -1,0 +1,274 @@
+---
+title: "Tarea 1: Portafolio Mercado de Semiconductores"
+author: "Carlos Roman Ulloa"
+date: "2026-11-03"
+output: html_document
+---
+Mercado seleccionado: SEMICONDUCTORES (10 acciones)
+
+- NVDA (NVIDIA): GPUs y chips para inteligencia artificial y centros de datos.
+- AMD (Advanced Micro Devices): procesadores (CPU) y tarjetas graficas (GPU).
+- AVGO (Broadcom): chips de redes, conectividad y aceleradores a la medida.
+- TSM (Taiwan Semiconductor): mayor fabricante (foundry) de chips del mundo.
+- INTC (Intel): procesadores para PC y servidores, y fabricacion propia.
+- QCOM (Qualcomm): chips para celulares (Snapdragon) y comunicaciones 5G.
+- ASML (ASML Holding): maquinas de litografia para fabricar chips (EUV).
+- MU (Micron): memorias DRAM y NAND (incluye memoria HBM para IA).
+- TXN (Texas Instruments): chips analogicos para industria y autos.
+- AMAT (Applied Materials): equipo para fabricar semiconductores.
+
+Justificacion: son las empresas mas grandes y representativas de la cadena de valor (diseno, fabricacion, equipo y memoria).
+
+1. Importe la informacion de los stocks (en R) de los ultimos 3 anos. El nivel de informacion es diario.
+```{r}
+rm(list = ls()) #borra todo
+library("quantmod")
+
+ticker1<-"NVDA"
+ticker2<-"AMD"
+ticker3<-"AVGO"
+ticker4<-"TSM"
+ticker5<-"INTC"
+ticker6<-"QCOM"
+ticker7<-"ASML"
+ticker8<-"MU"
+ticker9<-"TXN"
+ticker10<-"AMAT"
+
+stocks1<-getSymbols(ticker1,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks2<-getSymbols(ticker2,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks3<-getSymbols(ticker3,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks4<-getSymbols(ticker4,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks5<-getSymbols(ticker5,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks6<-getSymbols(ticker6,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks7<-getSymbols(ticker7,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks8<-getSymbols(ticker8,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks9<-getSymbols(ticker9,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+stocks10<-getSymbols(ticker10,from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+
+#explorar
+head(stocks1)
+tail(stocks1)
+```
+
+Unir los precios ajustados y graficar
+```{r}
+stocks<-cbind(stocks1$NVDA.Adjusted,stocks2$AMD.Adjusted,stocks3$AVGO.Adjusted,stocks4$TSM.Adjusted,stocks5$INTC.Adjusted,stocks6$QCOM.Adjusted,stocks7$ASML.Adjusted,stocks8$MU.Adjusted,stocks9$TXN.Adjusted,stocks10$AMAT.Adjusted)
+head(stocks)
+tail(stocks)
+str(stocks)
+
+plot(stocks$ASML.Adjusted,ylab="prices",main="Precios ajustados")
+lines(stocks$NVDA.Adjusted,col="green")
+lines(stocks$AMD.Adjusted,col="red")
+lines(stocks$AVGO.Adjusted,col="blue")
+lines(stocks$TSM.Adjusted,col="orange")
+lines(stocks$INTC.Adjusted,col="gray")
+lines(stocks$QCOM.Adjusted,col="purple")
+lines(stocks$MU.Adjusted,col="brown")
+lines(stocks$TXN.Adjusted,col="pink")
+lines(stocks$AMAT.Adjusted,col="yellow")
+```
+
+2. Obtenga y grafique los rendimientos, riesgos y sharpe individuales
+```{r}
+#rendimientos diarios
+ret<-diff(log(stocks)) # ln(vf/vi)
+meanret<-colMeans(ret,na.rm="TRUE") #rendimiento promedio diario
+meanret
+meanret*21*12 #anual
+
+#riesgo
+sdstocks<-apply(ret,2,sd,na.rm="TRUE") #riesgo diario
+sdstocks
+sdstocks*sqrt(21*12) #anual
+
+#sharpe; CETES 28 dias 6.01% -> 6.01/360 = 0.0167% diario
+6.01/360
+sharpestocks<-(meanret-0.000167)/sdstocks
+sharpestocks
+
+#cuadro individual
+individual<-as.data.frame(cbind(meanret,sdstocks,sharpestocks))
+names(individual)[1:3]<-c("return","risk","sharpe")
+individual
+```
+
+Graficas individuales
+```{r}
+barplot(meanret,main="Rendimiento diario",las=2,col="blue")
+barplot(sdstocks,main="Riesgo diario",las=2,col="red")
+barplot(sharpestocks,main="Sharpe diario",las=2,col="green")
+
+plot(sdstocks,meanret,main="Riesgo vs Rendimiento",xlab="risk",ylab="return",pch=19)
+text(sdstocks,meanret,labels=names(ret),pos=3,cex=0.7)
+```
+
+Conclusion: la accion de mayor rendimiento es `r names(which.max(meanret))`, la de menor riesgo es `r names(which.min(sdstocks))` y la de mejor sharpe (mejor relacion rendimiento-riesgo) es `r names(which.max(sharpestocks))`.
+
+3. Cree un PORTAFOLIO
+
+3.1 Obtenga y grafique los rendimientos, riesgos y sharpe del PORTAFOLIO (peso mayor a la accion de mayor rendimiento y peso menor a la de menor rendimiento).
+```{r}
+#a) pesos de acuerdo al rendimiento (de mayor a menor)
+pesos<-c(0.20,0.15,0.13,0.11,0.10,0.09,0.08,0.06,0.05,0.03)
+sum(pesos) #comprobar
+weights<-pesos[rank(-meanret)] #20% a la de mayor rendimiento ... 3% a la de menor
+weights
+sort(meanret,decreasing=TRUE) #comprobar
+
+#b) rendimiento del portafolio
+m.meanret<-as.matrix(meanret)
+portreturn<-(t(weights)%*%m.meanret)
+portreturn #diario
+portreturn*21*12 #anual
+
+#c) riesgo del portafolio
+cov<-cov(ret,use="complete.obs")
+covm<-as.matrix(cov)
+weightsm<-as.matrix(weights)
+sd<-((t(weights)%*%covm%*%weightsm))^0.5
+sd #diario
+sd*sqrt(21*12) #anual
+
+#d) sharpe
+sharpe<-(portreturn-0.000167)/sd
+sharpe
+
+#e) juntar
+portfolio<-c(portreturn,sd,sharpe,weights)
+names(portfolio)<-c("portreturn","risk","sharpe",names(ret))
+portfolio
+```
+
+Graficas del portafolio
+```{r}
+barplot(weights,names.arg=names(ret),main="Pesos del portafolio",las=2,col="blue")
+
+plot(sdstocks,meanret,main="Acciones vs Portafolio",xlab="risk",ylab="return",pch=19,xlim=c(0,max(sdstocks)))
+text(sdstocks,meanret,labels=names(ret),pos=3,cex=0.7)
+points(sd,portreturn,col="red",pch=19,cex=2)
+text(sd,portreturn,labels="Portafolio",pos=1,col="red")
+```
+
+Conclusion: al diversificar, el portafolio tiene un riesgo (`r round(sd,4)`) menor que la mayoria de las acciones individuales, con un rendimiento diario de `r round(portreturn,5)` y sharpe de `r round(sharpe,4)`.
+
+3.2 Obtener 100,000 simulaciones para la maximizacion del rendimiento o minimizacion del riesgo (OPTIMIZACION)
+```{r}
+set.seed(123)
+port<-matrix(0,100000,13) #100,000 simulaciones y 13 col (3 indicadores + 10 acciones)
+
+for (i in 1:100000) {
+#a) pesos aleatorios
+weights<-runif(10,0,1)
+s<-sum(weights)
+weights<-weights/s #suma de pesos=1
+
+#b) rendimiento del portafolio
+m.meanret<-as.matrix(meanret)
+portreturn<-(t(weights)%*%m.meanret)
+
+#c) riesgo del portafolio
+cov<-cov(ret,use="complete.obs")
+covm<-as.matrix(cov)
+weightsm<-as.matrix(weights)
+covt<-covm%*%weightsm
+sd<-((t(weightsm)%*%covt))^0.5
+
+#d) sharpe
+sharpe<-(portreturn-0.000167)/sd
+
+#e) juntar
+port[i,1]<-portreturn
+port[i,2]<-sd
+port[i,3]<-sharpe
+port[i,4:13]<-weights
+}
+
+colnames(port)<-c("return","risk","sharpe",names(ret))
+head(port)
+port<-as.data.frame(port)
+summary(port$return)
+summary(port$risk)
+summary(port$sharpe)
+```
+
+4. Obtenga del proceso de Optimizacion:
+```{r}
+MaxRet<-port[order(port$return,decreasing=TRUE),] #Max Return
+MinRisk<-port[order(port$risk,decreasing=FALSE),] #Min Risk
+MaxSharpe<-port[order(port$sharpe,decreasing=TRUE),] #Max Sharpe
+```
+
+4.1 Cliente ADVERSO al riesgo (3 opciones de menor riesgo)
+```{r}
+head(MinRisk,3)
+```
+
+4.2 Cliente PROPENSO al riesgo (3 opciones de mayor rendimiento)
+```{r}
+head(MaxRet,3)
+```
+
+4.3 Cliente que busca la mejor opcion entre rendimiento y riesgo (3 opciones de mayor sharpe)
+```{r}
+head(MaxSharpe,3)
+```
+
+Grafica de la optimizacion
+```{r}
+plot(port$risk,port$return,main="100,000 portafolios simulados",xlab="risk",ylab="return",col="gray",pch=".")
+points(MinRisk$risk[1:3],MinRisk$return[1:3],col="blue",pch=19)
+points(MaxRet$risk[1:3],MaxRet$return[1:3],col="red",pch=19)
+points(MaxSharpe$risk[1:3],MaxSharpe$return[1:3],col="green",pch=19)
+legend("bottomright",legend=c("Min Risk","Max Return","Max Sharpe"),col=c("blue","red","green"),pch=19)
+```
+
+5. Compare sus resultados con el rendimiento y riesgo del S&P500 y el IPC (mismo periodo).
+```{r}
+sp<-getSymbols("^GSPC",from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+ipc<-getSymbols("^MXX",from="2023-11-03",to="2026-11-03",periodicity="daily",warnings=TRUE,auto.assign=FALSE)
+head(sp)
+tail(sp)
+head(ipc)
+tail(ipc)
+
+#S&P500
+ret_sp<-diff(log(sp$GSPC.Adjusted))
+meanret_sp<-mean(ret_sp,na.rm=TRUE)
+sd_sp<-sd(ret_sp,na.rm=TRUE)
+sharpe_sp<-(meanret_sp-0.000167)/sd_sp
+
+#IPC
+ret_ipc<-diff(log(ipc$MXX.Adjusted))
+meanret_ipc<-mean(ret_ipc,na.rm=TRUE)
+sd_ipc<-sd(ret_ipc,na.rm=TRUE)
+sharpe_ipc<-(meanret_ipc-0.000167)/sd_ipc
+
+#cuadro comparativo
+comparacion<-rbind(portfolio[1:3],as.numeric(MinRisk[1,1:3]),as.numeric(MaxRet[1,1:3]),as.numeric(MaxSharpe[1,1:3]),c(meanret_sp,sd_sp,sharpe_sp),c(meanret_ipc,sd_ipc,sharpe_ipc))
+comparacion<-as.data.frame(comparacion)
+names(comparacion)[1:3]<-c("return","risk","sharpe")
+rownames(comparacion)<-c("Portafolio 3.1","Min Risk","Max Return","Max Sharpe","S&P500","IPC")
+comparacion
+comparacion$return_anual<-comparacion$return*21*12
+comparacion$risk_anual<-comparacion$risk*sqrt(21*12)
+comparacion
+```
+
+Grafica comparativa
+```{r}
+plot(comparacion$risk,comparacion$return,main="Portafolios vs S&P500 e IPC",xlab="risk",ylab="return",pch=19,col=c("black","blue","red","green","orange","purple"),cex=1.5,xlim=c(0,max(comparacion$risk)*1.2),ylim=c(min(0,comparacion$return),max(comparacion$return)*1.2))
+text(comparacion$risk,comparacion$return,labels=rownames(comparacion),pos=3,cex=0.7)
+
+barplot(comparacion$return,names.arg=rownames(comparacion),main="Rendimiento diario",las=2,col="blue")
+barplot(comparacion$risk,names.arg=rownames(comparacion),main="Riesgo diario",las=2,col="red")
+barplot(comparacion$sharpe,names.arg=rownames(comparacion),main="Sharpe diario",las=2,col="green")
+```
+
+Conclusiones:
+
+- Adverso al riesgo: se recomienda el portafolio de minimo riesgo (riesgo diario `r round(MinRisk$risk[1],4)` vs `r round(sd_sp,4)` del S&P500 y `r round(sd_ipc,4)` del IPC); concentra su peso en las acciones menos volatiles del sector.
+- Propenso al riesgo: se recomienda el portafolio de maximo rendimiento (rendimiento anual `r round(MaxRet$return[1]*21*12*100,2)`% vs `r round(meanret_sp*21*12*100,2)`% del S&P500 y `r round(meanret_ipc*21*12*100,2)`% del IPC), aceptando mayor volatilidad.
+- Cliente medio: se recomienda el portafolio de maximo sharpe (`r round(MaxSharpe$sharpe[1],4)`), que da el mejor rendimiento por unidad de riesgo.
+- El mercado de semiconductores tiene mas riesgo que los indices (S&P500 e IPC) porque es un solo sector; a cambio ofrece mayor rendimiento esperado. El IPC esta en pesos, por lo que la comparacion no incluye el efecto del tipo de cambio.
