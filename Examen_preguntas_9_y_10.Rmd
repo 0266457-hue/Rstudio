@@ -1,0 +1,64 @@
+---
+title: "Examen: Preguntas 9 y 10"
+author: "Carlos Roman Ulloa"
+date: "2026-11-19"
+output: html_document
+---
+Importar la base de datos
+```{r}
+rm(list = ls())
+risk<-read.csv("C:/Users/carlos/Downloads/df2.csv",header=TRUE)
+head(risk)
+tail(risk)
+```
+
+(1) Elegir las categorías "Fully Paid" y "Current" de loan_status y guardar como risk1
+```{r}
+unique(risk$loan_status)
+risk1<-risk[risk$loan_status=="Fully Paid"|risk$loan_status=="Current",]
+unique(risk1$loan_status) #comprobar
+```
+
+(9) Crear ydep, guardar en risk4 las variables ydep, loan_amnt, grade, dti y home_ownership, transformar a numéricas y correr mod2
+```{r}
+risk1$ydep<-ifelse(risk1$loan_status=="Fully Paid",1,0)
+unique(risk1$ydep) #comprobar
+risk4<-risk1[,c("ydep","loan_amnt","grade","dti","home_ownership")]
+names(risk4) #comprobar
+str(risk4)
+unique(risk4$grade)
+unique(risk4$home_ownership)
+risk4$grade<-as.numeric(as.factor(risk4$grade)) #A = 1 ... G = 7
+risk4$home_ownership<-as.numeric(as.factor(risk4$home_ownership)) #MORTGAGE = 1, OWN = 2, RENT = 3
+str(risk4)
+mod2<-glm(ydep~loan_amnt+grade+dti+home_ownership,data=risk4,family=binomial())
+summary(mod2)
+```
+
+(9) Probabilidad de pago de los solicitantes (loan_amnt, grade, dti, home_ownership)
+Solicitante 1 = (30000, 2, 10, 1) y Solicitante 2 = (8000, 3, 25, 3)
+```{r}
+per1<-c(30000,2,10,1)
+per2<-c(8000,3,25,3)
+perfs<-rbind(per1,per2)
+perfs<-as.data.frame(perfs)
+names(perfs)[1:4]<-c("loan_amnt","grade","dti","home_ownership")
+perfs
+predicted_test<-predict(mod2,perfs)
+predicted_test #resultado en logaritmo
+probabilidad<-exp(predicted_test)/(1+exp(predicted_test)) #quitar logaritmo
+probabilidad
+```
+
+(10) Exponencial de los coeficientes y p-value de mod2
+```{r}
+mod2$coefficients
+exp(mod2$coefficients)
+summary(mod2)$coefficients #estimate, error estandar, z y p-value
+```
+
+(10) Respuesta
+
+1. Respecto a los solicitantes: la probabilidad de pago del Solicitante 1 es 0.8242 y la del Solicitante 2 es 0.8997. La diferencia viene del monto del préstamo (30,000 contra 8,000). Aunque el Solicitante 1 tiene mejor grade (2 contra 3), menor dti (10 contra 25) y vivienda hipotecada (1 contra 3), pedir 22,000 más reduce su probabilidad de pago.
+
+2. Respecto al modelo: el coeficiente de loan_amnt es exp(-0.0000549)=0.99995. Parece pequeño, pero es por cada peso y es significativo (p<0.001), por lo que con 22,000 de diferencia tiene mayor repercusión (22,000 x 0.0000549 = 1.21 en el logaritmo) que grade, exp(-0.398)=0.672 (p<0.001), cuya diferencia es de solo 1 nivel (0.398). dti, exp(-0.019)=0.981, y home_ownership, exp(0.062)=1.064, no son significativos (p=0.13 y p=0.60).
